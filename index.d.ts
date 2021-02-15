@@ -138,6 +138,7 @@ declare module 'shoukaku' {
     port: number;
     auth: string;
     group?: string;
+    secure: boolean;
   }
 
   export interface EqualizerBand {
@@ -225,7 +226,7 @@ declare module 'shoukaku' {
   }
 
   export class ShoukakuRest {
-    constructor(host: string, port: string, auth: string, timeout: number);
+    constructor(host: string, port: string, auth: string, timeout: number, secure: boolean);
     private auth: string;
     public timeout: number;
     public url: string;
@@ -339,6 +340,7 @@ declare module 'shoukaku' {
     public name: string;
     public group?: string;
     public url: string;
+    public secure: boolean;
     public resumed: boolean;
     public penalties: number;
 
