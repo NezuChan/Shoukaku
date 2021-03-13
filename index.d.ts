@@ -41,7 +41,7 @@ declare module 'shoukaku' {
     };
   }
 
-  export type Source = 'youtube' | 'soundcloud';
+  export type Source = 'youtube' | 'soundcloud' | 'youtubemusic';
 
   export enum ShoukakuStatus {
     CONNECTING = 'CONNECTING',
@@ -83,6 +83,7 @@ declare module 'shoukaku' {
     state: {
       time: number;
       position: number;
+      connected: boolean;
     }
   }
 
@@ -118,6 +119,7 @@ declare module 'shoukaku' {
 
   export interface ShoukakuPlayOptions {
     noReplace?: boolean,
+    pause?: boolean;
     startTime?: number;
     endTime?: number;
   }
@@ -137,8 +139,8 @@ declare module 'shoukaku' {
     host: string;
     port: number;
     auth: string;
+    secure?: boolean;
     group?: string;
-    secure: boolean;
   }
 
   export interface EqualizerBand {
@@ -226,8 +228,9 @@ declare module 'shoukaku' {
   }
 
   export class ShoukakuRest {
-    constructor(host: string, port: string, auth: string, timeout: number, secure: boolean);
+    constructor(host: string, port: string, auth: string, userAgent: string, timeout: number, secure: boolean);
     private auth: string;
+    private userAgent: string;
     public timeout: number;
     public url: string;
 

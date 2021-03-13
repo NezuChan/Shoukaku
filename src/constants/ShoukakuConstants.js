@@ -68,6 +68,7 @@ class ShoukakuConstants {
     * Required Object in Shoukaku's join method.
     * @typedef {Object} ShoukakuPlayOptions
     * @property {boolean} [noReplace=true] Specifies if the player will not replace the current track when executing this action.
+    * @property {boolean} [pause=false] If `true`, the player will pause when the track starts playing.
     * @property {?number} [startTime] In milliseconds on when to start.
     * @property {?number} [endTime] In milliseconds on when to end.
     * @memberof ShoukakuConstants#
@@ -75,6 +76,7 @@ class ShoukakuConstants {
     static get ShoukakuPlayOptions() {
         return {
             noReplace: true,
+            pause: false,
             startTime: undefined,
             endTime: undefined
         };
@@ -109,6 +111,7 @@ class ShoukakuConstants {
     * @property {string} host Your node host / ip address of where the lavalink is hosted.
     * @property {number} port The Port Number of your lavalink instance.
     * @property {string} auth The authentication key you set on your lavalink config.
+    * @property {?boolean} [secure] If you want to use https and wss instead of http and ws.
     * @property {?string} [group] Group of this node, used for grouping specific nodes.
     * @memberof ShoukakuConstants#
     */
@@ -118,6 +121,7 @@ class ShoukakuConstants {
             host: null,
             port: null,
             auth: null,
+            secure: false,
             group: undefined
         };
     }

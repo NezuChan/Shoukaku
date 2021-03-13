@@ -17,7 +17,11 @@ class ShoukakuRest {
      * @param {string} auth The authentication key you set on your lavalink config.
      * @param {string} userAgent User agent to use per request
      * @param {number} [timeout=15000] Timeout before a request times out.
+<<<<<<< HEAD
      * @param {boolean} secure
+=======
+     * @param {boolean} secure use secure protocol or no
+>>>>>>> 2666b76e352a2d1ec1daef30389efcde4e71c02e
      */
     constructor(host, port, auth, userAgent, timeout, secure) {
         /**
@@ -37,7 +41,7 @@ class ShoukakuRest {
     /**
     * Resolves a identifier into a lavalink track.
     * @param {string} identifier Anything you want for lavalink to search for
-    * @param {string} search Either `youtube` or `soundcloud`. If specified, resolve will return search results.
+    * @param {string} [search] Either `youtube` or `soundcloud` or `youtubemusic`. If specified, resolve will return search results.
     * @memberof ShoukakuRest
     * @returns {Promise<null|ShoukakuTrackList>} The parsed data from Lavalink rest
     */
