@@ -124,6 +124,11 @@ declare module 'shoukaku' {
     endTime?: number;
   }
 
+  export interface AttemptReconnectOptions {
+    voiceChannelID?: string;
+    forceReconnect?: boolean;
+  }
+
   export interface ShoukakuOptions {
     resumable?: boolean | string;
     resumableTimeout?: number;
@@ -185,6 +190,8 @@ declare module 'shoukaku' {
     offset?: number;
     scale?: number;
 }
+
+
 
   class ShoukakuConstants {
     static ShoukakuStatus: ShoukakuStatus;
@@ -297,7 +304,7 @@ declare module 'shoukaku' {
     public clearFilters(): Promise<ShoukakuPlayer>;
     public resume(moved: boolean): Promise<void>;
 
-    private connect(options: unknown, callback:(error: ShoukakuError | Error | null, player: ShoukakuPlayer) => void): void;
+    private connect(options: object): Promise<void>;
     private updateFilters(): Promise<void>;
     private reset(): void;
     private _onLavalinkMessage(json: Object): Promise<void>;
@@ -310,26 +317,28 @@ declare module 'shoukaku' {
     public guildID: string;
     public sessionID: string | null;
     public voiceChannelID: string | null;
+    public lastVoiceChannelID: string | null;
     public region: string | null;
     public selfMute: boolean;
     public selfDeaf: boolean;
     public state: ShoukakuStatus;
     public channelMoved: boolean;
     public voiceMoved: boolean;
+    public reconnecting: boolean;
 
-    private lastServerUpdate: unknown | null;
-    private _callback: (err: ShoukakuError | Error | null, player: ShoukakuPlayer) => void | null;
-    private _timeout: number | null;
+    private serverUpdate: object | null;
+    private connectTimeout: NodeJS.Timeout | null;
 
-    public attemptReconnect(): Promise<ShoukakuPlayer>;
+    public attemptReconnect(options: AttemptReconnectOptions): Promise<ShoukakuPlayer>;
 
-    private stateUpdate(data: unknown);
-    private serverUpdate(data: unknown);
-    private connect(d: unknown, callback: (err: ShoukakuError | Error | null, player: ShoukakuPlayer) => void): void;
+    private stateUpdate(data: object);
+    private serverUpdate(data: object);
+    private moveToNode(node: ShoukakuSocket): Promise<void>;
+    private connect(d: object): Promise<void>;
     private disconnect(): void;
-    private moveToNode(): Promise<void>;
-    private send(d: unknown): void;
+    private send(d: unknown, important: boolean): void;
     private voiceUpdate(): Promise<void>;
+    private authenticateFailed(error: ShoukakuError): void;
   }
 
   export class ShoukakuSocket {
@@ -343,7 +352,6 @@ declare module 'shoukaku' {
     public name: string;
     public group?: string;
     public url: string;
-    public secure: boolean;
     public resumed: boolean;
     public penalties: number;
 

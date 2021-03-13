@@ -1,10 +1,10 @@
 const { ShoukakuOptions, ShoukakuNodeOptions, ShoukakuStatus } = require('./constants/ShoukakuConstants.js');
 const { CONNECTED } = ShoukakuStatus;
-const { mergeDefault } = require('./util/ShoukakuUtil.js');
-const { version } = require('discord.js');
+const { mergeDefault, getVersion } = require('./util/ShoukakuUtil.js');
 const ShoukakuError = require('./constants/ShoukakuError.js');
 const ShoukakuSocket = require('./node/ShoukakuSocket.js');
 const EventEmitter = require('events');
+const { variant, version } = getVersion();
 
 /**
   * Shoukaku, governs the client's node connections.
@@ -19,7 +19,14 @@ class Shoukaku extends EventEmitter {
      */
     constructor(client, nodes, options) {
         super();
-        if (!nodes || !nodes.length) 
+        if (variant === 'light') {
+            if (!version.startsWith('3'))
+                throw new ShoukakuError('Shoukaku will only work at Discord.JS-light v3. Versions below Discord.JS-light v3 is not supported.');
+        } else {
+            if (!version.startsWith('12'))
+                throw new ShoukakuError('Shoukaku will only work at Discord.JS v12. Versions below Discord.JS v12 is not supported.');
+        }
+        if (!nodes || !nodes.length)
             throw new ShoukakuError('No nodes supplied');
         /**
         * The instance of Discord.js client used with Shoukaku.
@@ -137,13 +144,10 @@ class Shoukaku extends EventEmitter {
             throw new ShoukakuError('The node name you specified doesn\'t exist');
         this.nodes.delete(node.name);
         node.removeAllListeners();
-        node.executeCleaner()
-            .catch(error => this.emit('error', name, error))
-            .finally(() => {
-                if (node.ws) node.ws.close(1000, reason);
-                node.emit('debug', node.name, `[Main] Node Removed => Name: ${node.name}`);
-                this.emit('disconnected', name, reason);
-            });
+        node.executeCleaner();
+        if (node.ws) node.ws.close(1000, reason);
+        node.emit('debug', node.name, `[Main] Node Removed => Name: ${node.name}`);
+        this.emit('disconnected', name, reason);
     }
     /**
      * Shortcut to get the Ideal Node or a manually specified Node from the current nodes that Shoukaku governs.
@@ -187,10 +191,9 @@ class Shoukaku extends EventEmitter {
 
     _ready(name, resumed) {
         const node = this.nodes.get(name);
-        node.executeCleaner()
-            .then(() => node.emit('debug', node.name, `[Main] Node Ready => Name: ${node.name}`))
-            .then(() => this.emit('ready', name, resumed))
-            .catch(error => this.emit('error', name, error));
+        node.executeCleaner();
+        node.emit('debug', node.name, `[Main] Node Ready => Name: ${node.name}`);
+        this.emit('ready', name, resumed);
     }
 
     _close(name, code, reason) {
