@@ -1,4 +1,3 @@
-const { promisify } = require('util');
 const { ShoukakuStatus, ShoukakuNodeStats, ShoukakuJoinOptions } = require('../constants/ShoukakuConstants.js');
 const { CONNECTED, CONNECTING, DISCONNECTED } = ShoukakuStatus;
 const { websocketSend } = require('../util/ShoukakuUtil.js');
@@ -141,24 +140,25 @@ class ShoukakuSocket extends EventEmitter {
     async joinVoiceChannel(options = ShoukakuJoinOptions) {
         if (!options.guildID || !options.voiceChannelID)
             throw new ShoukakuError('Guild ID or Channel ID is not specified.');
-
         if (this.state !== CONNECTED)
             throw new ShoukakuError('This node is not yet ready.');
 
-        let player = this.players.get(options.guildID);
-        if (player) {
-            if (player.voiceConnection.state === CONNECTED) return player;
-            throw new ShoukakuError('This player is not yet connected, please wait for it to connect');
+        const existing = this.players.get(options.guildID);
+        if (existing) {
+            if (existing.voiceConnection.state !== CONNECTED) 
+                throw new ShoukakuError('This player is not yet connected, please wait for it to connect'); 
+            return existing;
         }
 
         const guild = this.shoukaku.client.guilds.cache.get(options.guildID);
         if (!guild)
             throw new ShoukakuError('Guild not found, cannot continue creating this connection.');
 
-        player = new ShoukakuPlayer(this, guild);
-        this.players.set(guild.id, player);
+        const player = new ShoukakuPlayer(this, guild);
+
         try {
-            await promisify(player.connect.bind(player))(options);
+            this.players.set(guild.id, player);
+            await player.connect(options);
             return player;
         } catch (error) {
             this.players.delete(guild.id);
@@ -191,11 +191,14 @@ class ShoukakuSocket extends EventEmitter {
         });
     }
 
-    async executeCleaner() {
+    executeCleaner() {
         if (this.resumed) return;
         if (this.moveOnDisconnect && this.shoukaku.nodes.size > 0) {
-            const players = [...this.players.values()];
-            await Promise.all(players.map(player => player.voiceConnection.moveToNode(this.shoukaku._getIdeal(player.voiceConnection.node.group))));
+            for (const player of [...this.players.values()]) {
+                player.voiceConnection
+                    .moveToNode(this.shoukaku._getIdeal(this.group))
+                    .catch(error => player.emit('error', error));
+            }
             return;
         }
         let error;
@@ -206,7 +209,7 @@ class ShoukakuSocket extends EventEmitter {
         }
         for (const player of this.players.values()) {
             player.emit('nodeDisconnect', error);
-            player.voiceConnection.disconnect();
+            player.disconnect();
         }
     }
 
@@ -255,19 +258,19 @@ class ShoukakuSocket extends EventEmitter {
         const player = this.players.get(packet.d.guild_id);
         if (!player) return;
         if (packet.t === 'VOICE_SERVER_UPDATE') {
-            player.voiceConnection.serverUpdate(packet.d);
+            player.voiceConnection.setServerUpdate(packet.d);
             return;
         }
         if (packet.d.user_id !== this.shoukaku.id) return;
-        player.voiceConnection.stateUpdate(packet.d);
+        player.voiceConnection.setStateUpdate(packet.d);
     }
 
-    async _onLavalinkMessage(json) {
+    _onLavalinkMessage(json) {
         this.emit('debug', this.name, `[Socket] Message OP: ${json.op} => Node ${this.name}`);
         if (json.op === 'stats') return this.stats = json;
         const player = this.players.get(json.guildId);
         if (!player) return;
-        await player._onLavalinkMessage(json);
+        player._onLavalinkMessage(json);
     }
 }
 module.exports = ShoukakuSocket;
