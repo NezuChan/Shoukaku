@@ -56,7 +56,13 @@ class ShoukakuTrack {
              * URL to this track
              * @type {?string}
              */
-            uri: raw.info.uri
+            uri: raw.info.uri,
+
+            /**
+             * Video Thumbnail
+             * @type {?string}
+             */
+            thumbnail: `https://img.youtube.com/vi/${raw.info.identifier}/default.jpg`
         };
     }
 }
